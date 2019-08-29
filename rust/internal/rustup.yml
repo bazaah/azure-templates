@@ -1,3 +1,5 @@
+# Installs rust from the official website for windows and *nix / macOS
+
 parameters:
   rust: ''
   components: []

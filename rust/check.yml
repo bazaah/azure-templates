@@ -1,3 +1,16 @@
+# Runs a compile check on your repo
+#
+# Should probably be done early in the pipeline to
+# short circuit compile errors and avoid spurious test fails
+#
+# Parameters
+#   rust: <string> = "stable"
+#     Which version of rust to install when running the compile check
+#   all_features: <bool> = false
+#     Switches on all features on the rust crate
+#       If you have features that are not mutually exclusive
+#       running this can help find edge cases 
+
 parameters:
   rust: stable
   all_features: false

@@ -1,11 +1,37 @@
+# Runs the cargo test apparatus
+#
+# Special mention for the 'test_list' param:
+# It runs a separate 'cargo test' for each item in the list,
+# using that item's string as args to pass to 'cargo test'
+#
+# Parameters
+#   rust: <string> = empty
+#     Which version of rust to install when running the tests
+#       YOU MUST SET THIS, this param must be explicit as -Z libtest
+#       options do strange things if ran on a rust channel that
+#       doesn't support it
+#   test_list: <vec<string>> = ["--all"]
+#     List of args to pass to 'cargo test' instances
+#       In pseudo rust code: "for args in test_list.iter() { println!("cargo test {}", args) };"
+#   id: <string> = empty
+#     Job unique identifer,
+#       YOU MUST SET THIS, and it must be unique across all jobs in the pipeline
+#   allow_fail: <bool> = false
+#      Ignore failed tests
+#   cross: <bool> = false
+#      Cross platform testing
+#        If true the tests will be run on *nix macOS and Windows nodes, else only on *nix
+
 parameters:
   rust: ''
-  test_list: []
+  test_list: 
+    - "--all"
+  id: ''
   allow_fail: false
   cross: false
 
 jobs:
-- job: cargo_test
+- job: cargo_test_${{ parameters.id }}
   ${{ if eq(parameters.rust, 'stable') }}:
     displayName: Cargo test
   ${{ if ne(parameters.rust, 'stable') }}:
@@ -26,6 +52,13 @@ jobs:
   pool:
     vmImage: $(vmImage)
   steps:
+  - bash: |
+      if [ -z "$PARAM_RUST_VERSION" ]; then
+        echo "##vso[task.logissue type=error;]Missing template parameter \"rust\"... you must specify a rust parameter for test.yml"
+        echo "##vso[task.complete result=Failed;]"
+      fi
+    env:
+      PARAM_RUST_VERSION: ${{ parameters.rust }}
   - template: internal/install.yml
     parameters:
       rust: ${{ parameters.rust }}

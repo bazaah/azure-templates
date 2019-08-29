@@ -1,5 +1,20 @@
+# Runs the rust linter (clippy) on your repo
+#
+# Parameters
+#   rust: <string> = "stable"
+#     Which version of rust to install when running clippy
+#   args: <string> = "--all"
+#     List of args to pass to clippy, defaulting to "--all"
+#   allow_fail: <bool> = false
+#     Ignore a failed linting
+#       Useful if you want to check if your code is pristine,
+#       but don't want your build to fail if its not. Also useful
+#       when linting on nightly as clippy breaks often on nightly builds
+
+
 parameters:
-  rust: ''
+  rust: stable
+  args: '--all'
   allow_fail: false
 
 jobs:
@@ -12,10 +27,10 @@ jobs:
   pool:
     vmImage: ubuntu-16.04
   steps:
-    - template: _setup.yml
+    - template: internal/install.yml
       parameters:
         rust: ${{ parameters.rust }}
         components:
           - clippy
-    - script: cargo clippy --all 
+    - script: cargo clippy ${{ parameters.args }}
       displayName: Run cargo clippy

@@ -1,10 +1,12 @@
+# Used by external templates, installs rust and checks out the git repo
+
 parameters:
   rust: ''
   components: []
   targets: []
 
 steps:
-  - template: internal/rustup.yml
+  - template: rustup.yml
     parameters:
       rust: ${{ parameters.rust }}
       components: ${{ parameters.components }}
