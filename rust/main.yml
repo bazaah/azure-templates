@@ -1,0 +1,39 @@
+variables:
+  rust_version: stable
+  check_all_features: false
+  allow_clippy_fail: true
+  test_cross_platform: true
+
+stages:
+  - stage: compilation_check
+    displayName: Compilation check
+    jobs:
+      - template: check.yaml
+        parameters: 
+          rust: ${{ variables.rust_version }}
+          all_features: ${{ variables.check_all_features }}
+  - stage: clippy_check
+    displayName: Clippy check
+    jobs:
+      - template: clippy.yaml
+        parameters:
+          rust: ${{ variables.rust_version }}
+          allow_fail: ${{ variables.allow_clippy_fail }}
+  - stage: cargo_test
+    displayName: Cargo test(s)
+    jobs:
+      - template: test.yaml
+        parameters:
+          rust: ${{ variables.rust_version }}
+          cross: ${{ variables.test_cross_platform }}
+          allow_fail: false
+          test_list:
+            - "--all"
+            - "--ignored"
+      - template: test.yaml
+        parameters:
+          rust: nightly
+          cross: ${{ variables.test_cross_platform }}
+          allow_fail: false
+          test_list:
+            - "--all"

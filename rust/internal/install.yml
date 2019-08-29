@@ -1,0 +1,15 @@
+parameters:
+  rust: ''
+  components: []
+  targets: []
+
+steps:
+  - template: internal/rustup.yml
+    parameters:
+      rust: ${{ parameters.rust }}
+      components: ${{ parameters.components }}
+      targets: ${{ parameters.targets }}
+
+  # Checkout any submodules the repository may have
+  - checkout: self
+    submodules: recursive
