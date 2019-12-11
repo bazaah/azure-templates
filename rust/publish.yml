@@ -1,0 +1,74 @@
+# Builds and publishes a rust binary
+#
+# Parameters
+#   rust: <string> = "stable"
+#     Which version of rust to install for the build
+#   args: <string> = "--release"
+#     List of args to pass to build, defaulting to "--release"
+#   image: <string> = "ubuntu-16.04"
+#     which image to use for the build, typically used to set which OS to build the binary for
+#   artifact: <string> = empty
+#     Name of the published artifact
+#       YOU MUST SET THIS
+
+parameters:
+  rust: stable
+  args: '--release'
+  image: 'ubuntu-16.04'
+  artifact: ''
+
+jobs:
+- job: ${{ parameters.name }}
+  ${{ if eq(parameters.rust, 'stable') }}:
+    displayName: cargo build ${{ parameters.args }}
+  ${{ if ne(parameters.rust, 'stable') }}:
+    displayName: cargo +${{ parameters.rust }} build ${{ parameters.args }}
+  pool:
+    vmImage: ${{ parameters.image }}
+  steps:
+    # Check for non-empty artifact name
+    - bash: |
+        if [ -z "$PARAM_ARTIFACT_NAME" ]; then
+          echo "##vso[task.logissue type=error;]Missing template parameter \"artifact\"... you must specify an artifact name for publish.yml"
+          echo "##vso[task.complete result=Failed;]"
+        fi
+      env:
+        PARAM_ARTIFACT_NAME: ${{ parameters.artifact }}
+    - template: internal/install.yml
+      parameters:
+        rust: ${{ parameters.rust }}
+    # Build with given args
+    - script: cargo build ${{ parameters.args }}
+      displayName: Run cargo build
+    # Copy files using unix path separators 
+    - task: CopyFiles@2
+      displayName: Copying binary to staging (*nix)
+      # Attempt to capture all possible locations rust will place a binary
+      inputs:
+        Contents: |
+          target/?(debug|release)/*
+          !target/?(debug|release)/*.d
+          !target/?(debug|release)/.*
+          target/**/?(debug|release)/*
+          !target/**/?(debug|release)/*.d
+          !target/**/?(debug|release)/.*
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
+    # Copy files using windows path separators 
+    - task: CopyFiles@2
+      displayName: Copying binary to staging (windows)
+      # Attempt to capture all possible locations rust will place a binary
+      inputs:
+        Contents: |
+          target\?(debug|release)\*
+          !target\?(debug|release)\*.d
+          !target\?(debug|release)\.*
+          target\**\?(debug|release)\*
+          !target\**\?(debug|release)\*.d
+          !target\**\?(debug|release)\.*
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      condition: eq(variables['Agent.OS'], 'Windows_NT')
+    # Publish artifacts using the given artifact name
+    - publish: $(Build.ArtifactStagingDirectory)
+      displayName: Publishing artifact(s) as ${{ parameters.artifact }}
+      artifact: ${{ parameters.artifact }}
