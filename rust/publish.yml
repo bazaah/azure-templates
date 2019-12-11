@@ -2,7 +2,7 @@
 #
 # Parameters
 #   rust: <string> = "stable"
-#     Which version of rust to install for the build
+#     Which version of rust to install for the build, defaulting "stable"
 #   args: <string> = "--release"
 #     List of args to pass to build, defaulting to "--release"
 #   image: <string> = "ubuntu-16.04"
@@ -19,10 +19,7 @@ parameters:
 
 jobs:
 - job: ${{ parameters.name }}
-  ${{ if eq(parameters.rust, 'stable') }}:
-    displayName: cargo build ${{ parameters.args }}
-  ${{ if ne(parameters.rust, 'stable') }}:
-    displayName: cargo +${{ parameters.rust }} build ${{ parameters.args }}
+  displayName: Build & publish rust binary
   pool:
     vmImage: ${{ parameters.image }}
   steps:
@@ -34,12 +31,16 @@ jobs:
         fi
       env:
         PARAM_ARTIFACT_NAME: ${{ parameters.artifact }}
+      displayName: Check artifact name exists
     - template: internal/install.yml
       parameters:
         rust: ${{ parameters.rust }}
     # Build with given args
     - script: cargo build ${{ parameters.args }}
-      displayName: Run cargo build
+      ${{ if eq(parameters.rust, 'stable') }}:
+        displayName: Run cargo build ${{ parameters.args }}
+      ${{ if ne(parameters.rust, 'stable') }}:
+        displayName: Run cargo +${{ parameters.rust }} build ${{ parameters.args }}
     # Copy files using unix path separators 
     - task: CopyFiles@2
       displayName: Copying binary to staging (*nix)
