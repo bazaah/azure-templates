@@ -6,7 +6,7 @@
 #   args: <string> = "--release"
 #     List of args to pass to build, defaulting to "--release"
 #   image: <string> = "ubuntu-16.04"
-#     which image to use for the build, typically used to set which OS to build the binary for
+#     Which image to use for the build, typically used to set which OS to build the binary for
 #   artifact: <string> = empty
 #     Name of the published artifact
 #       YOU MUST SET THIS
@@ -54,6 +54,7 @@ jobs:
           !target/**/?(debug|release)/*.d
           !target/**/?(debug|release)/.*
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
+        flattenFolders: true
       condition: not(eq(variables['Agent.OS'], 'Windows_NT'))
     # Copy files using windows path separators 
     - task: CopyFiles@2
@@ -68,6 +69,7 @@ jobs:
           !target\**\?(debug|release)\*.d
           !target\**\?(debug|release)\.*
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
+        flattenFolders: true
       condition: eq(variables['Agent.OS'], 'Windows_NT')
     # Publish artifacts using the given artifact name
     - publish: $(Build.ArtifactStagingDirectory)
